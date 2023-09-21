@@ -1,93 +1,74 @@
 export type TreeNode = TreeDirectory | TreeFile;
+export type TreeNodeType = "directory" | "file";
 
 interface Search {
-  search: (query: string | RegExp) => boolean;
+  findPath: (targetPath: string) => TreeNode | undefined;
+  contains: (substring: string) => boolean;
 }
 
 interface TreePath {
+  type: TreeNodeType;
+  name: string;
   path: string;
-}
-
-const joinPath = (root: string, node: string) => `${root}${node}`;
-
-export class Tree implements Search {
-  root: TreeRoot;
-  children: TreeNode[];
-
-  constructor(root: string, children?: TreeNode[]) {
-    this.root = new TreeRoot(root);
-    this.children = children ?? [];
-  }
-
-  search = (query: string | RegExp): boolean => this.root.search(query);
+  fullPath: string;
 }
 
 export class TreeDirectory implements Search, TreePath {
+  type: TreeNodeType = "directory";
   name: string;
-  children: TreeNode[];
   path: string;
+  fullPath: string;
+  children: TreeNode[];
 
   constructor(path: string, name: string, children: TreeNode[]) {
     this.name = name;
-    this.children = children;
-    this.path = joinPath(path, `${name}/`);
+    this.path = dirPath(path);
+    this.fullPath = dirPath(joinPath(path, name));
+    this.children = [...children];
   }
 
-  search = (query: string | RegExp): boolean =>
-    this.children.some((it) => it.search(query));
+  findPath = (targetPath: string): TreeNode | undefined => {
+    if (this.fullPath === targetPath) return this;
+
+    for (const it of this.children) {
+      const result = it.findPath(targetPath);
+      if (result) return result;
+    }
+  };
+
+  contains = (substring: string): boolean =>
+    this.name.includes(substring) ||
+    this.children.some((it) => it.contains(substring));
 }
 
-export class TreeRoot extends TreeDirectory {
-  constructor(name: string) {
-    super("", name, []);
+export class Tree extends TreeDirectory {
+  constructor(root: string, children?: TreeNode[]) {
+    super(root, root, children ?? []);
+    this.name = root;
+    this.path = dirPath(root);
+    this.fullPath = dirPath(root);
   }
 }
 
-export class TreeFile implements TreePath {
-  path: string;
+export class TreeFile implements Search, TreePath {
+  type: TreeNodeType = "file";
   name: string;
+  path: string;
   fullPath: string;
   extension: string;
 
   constructor(path: string, name: string) {
     this.name = name;
-    this.path = path;
+    this.path = dirPath(path);
     this.fullPath = joinPath(path, name);
     this.extension = name.split(".").pop() ?? "";
   }
 
-  search = (query: string | RegExp): boolean => this.name.search(query) >= 0;
-}
-
-interface TreeJson {
-  type: "directory" | "file";
-  name: string;
-  contents?: TreeJson[];
-}
-/**
- *
- * @param tree Tree JSON data as printed from the `tree -J` shell utility.
- */
-export const parseTree = (json: string): Tree => {
-  const treeData: TreeJson[] = JSON.parse(json);
-
-  const parseBranch = (parent: TreeDirectory, branch: TreeJson): TreeNode => {
-    switch (branch.type) {
-      case "directory":
-        // eslint-disable-next-line no-case-declarations
-        const dir = new TreeDirectory(parent.path, branch.name, []);
-        dir.children = (branch.contents ?? []).flatMap((it) => {
-          return parseBranch(dir, it);
-        });
-        return dir;
-      case "file":
-        return new TreeFile(parent.path, branch.name);
-    }
+  findPath = (targetPath: string): TreeNode | undefined => {
+    if (this.fullPath === targetPath) return this;
   };
+  contains = (substring: string): boolean => this.name.includes(substring);
+}
 
-  const root = treeData[0];
-  const tree = new Tree(root.name);
-  tree.children = root.contents?.map((it) => parseBranch(tree.root, it)) ?? [];
-
-  return tree;
-};
+const dirPath = (path: string) => (path.endsWith("/") ? path : `${path}/`);
+const joinPath = (root: string, node: string) => `${root}${node}`;
