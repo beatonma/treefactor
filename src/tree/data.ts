@@ -99,7 +99,7 @@ export class TreeDirectory implements BaseTreeNode {
     1 +
     this.children
       .map((it) => it.size())
-      .reduce((accumulator, current) => accumulator + current);
+      .reduce((accumulator, current) => accumulator + current, 0);
 
   clone = (): TreeDirectory =>
     new TreeDirectory(
