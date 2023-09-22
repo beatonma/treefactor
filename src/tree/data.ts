@@ -173,8 +173,8 @@ export class TreeDirectory implements BaseTreeNode {
 }
 
 export class Tree extends TreeDirectory {
-  constructor(root: string, children?: TreeNode[]) {
-    super(root, root, children ?? []);
+  constructor(root: string, children: TreeNode[]) {
+    super(root, root, children);
     this.name = root;
     this.path = Path.dirPath(root);
     this.fullPath = Path.dirPath(root);
