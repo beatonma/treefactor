@@ -19,7 +19,7 @@ textarea {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1ch;
-  overflow: hidden;
+  margin: 1ch;
 
   @media (width < 800px) {
     grid-template-columns: 1fr;
@@ -28,13 +28,14 @@ textarea {
 }
 
 .tree {
-  border: 2px solid grey;
+  border: 1px solid #393939;
+  border-radius: 1ch;
   background-color: black;
-  padding: 1ch;
+  padding: 2ch;
   overflow: hidden;
 
   &[data-editable="true"] {
-    background-color: #222222;
+    background-color: #151515;
   }
 
   > * {

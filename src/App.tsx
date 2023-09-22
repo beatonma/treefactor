@@ -12,8 +12,10 @@ import "./App.css";
 const SampleText: string = `[
   {"type":"directory","name":"beatonma-gulp/src/raw assets","contents":[
     {"type":"directory","name":"apps","contents":[
-      {"type":"file","name":"form.svg"},
-      {"type":"file","name":"io16.svg"},
+      {"type":"directory","name":"android","contents":[
+        {"type":"file","name":"form.svg"},
+        {"type":"file","name":"io16.svg"}
+      ]},
       {"type":"file","name":"microformats-reader.svg"}
   ]},
     {"type":"directory","name":"app-type","contents":[

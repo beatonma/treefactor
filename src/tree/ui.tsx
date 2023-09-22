@@ -1,6 +1,9 @@
-import { DragEvent, useContext } from "react";
-import { Tree, TreeDirectory, TreeFile, TreeNode } from "./data";
+import { createContext, DragEvent, useContext } from "react";
+import { Tree, TreeDirectory, TreeFile, TreeNode, TreeNodeType } from "./data";
 import { OptionsContext } from "./options";
+
+type OnTreeChange = (update: (prev: Tree) => Tree) => void;
+const TreeChangeContext = createContext<OnTreeChange | undefined>(undefined);
 
 interface NodeProps {
   editable: boolean;
@@ -12,35 +15,80 @@ export const TreeUI = (props: {
   const { tree, onEdit } = props;
   const editable = onEdit !== undefined;
 
+  const onDrop = (ev: DragEvent) => {
+    ev.preventDefault();
+    const data = JSON.parse(
+      ev.dataTransfer.getData(DragDropKey),
+    ) as DragDropPayload;
+    ev.dataTransfer.clearData();
+
+    onEdit?.((prev) => {
+      const tree = prev.clone();
+      tree.move(data.fullPath, tree.fullPath);
+      return tree;
+    });
+  };
+
   return (
-    <div className="tree" data-editable={editable}>
-      <Name name={tree.root.name} />
-      <Contents children={tree.children} editable={editable} />
-    </div>
+    <TreeChangeContext.Provider value={onEdit}>
+      <div
+        className="tree"
+        data-editable={editable}
+        onDrop={onDrop}
+        onDragOver={enableDragDrop(editable)}
+      >
+        <Name name={tree.name} />
+        <Contents children={tree.children} editable={editable} />
+      </div>
+    </TreeChangeContext.Provider>
   );
 };
 
 const DragDropKey = "node";
+interface DragDropPayload {
+  type: TreeNodeType;
+  fullPath: string;
+}
+const toDragDropPayload = (node: TreeNode): DragDropPayload => {
+  if (node instanceof TreeDirectory)
+    return {
+      type: "directory",
+      fullPath: node.fullPath,
+    };
+  return {
+    type: "file",
+    fullPath: node.fullPath,
+  };
+};
 const startDrag = (node: TreeNode) => (ev: DragEvent) => {
-  console.log(JSON.stringify(node));
-  ev.dataTransfer.setData(DragDropKey, JSON.stringify(node));
+  ev.stopPropagation();
+  const payload = toDragDropPayload(node);
+  ev.dataTransfer.setData(DragDropKey, JSON.stringify(payload));
 };
 
-const enableDragDrop = (ev: DragEvent) => {
-  ev.preventDefault();
+const enableDragDrop = (enabled: boolean) => {
+  if (enabled)
+    return (ev: DragEvent) => {
+      ev.preventDefault();
+    };
 };
 
 const DirectoryUI = (props: { directory: TreeDirectory } & NodeProps) => {
   const { directory, editable } = props;
+  const onTreeChange = useContext(TreeChangeContext);
 
-  const dragDrop = (ev: DragEvent) => {
+  const onDrop = (ev: DragEvent) => {
     ev.preventDefault();
-    const data = ev.dataTransfer.getData(DragDropKey);
-    console.log(
-      `Drag dropped DirectoryUI: ${data} ${JSON.stringify(
-        ev.dataTransfer.items,
-      )}`,
-    );
+    const data = JSON.parse(
+      ev.dataTransfer.getData(DragDropKey),
+    ) as DragDropPayload;
+    ev.dataTransfer.clearData();
+
+    onTreeChange?.((prev) => {
+      const tree = prev.clone();
+      tree.move(data.fullPath, directory.fullPath);
+      return tree;
+    });
   };
 
   return (
@@ -48,8 +96,8 @@ const DirectoryUI = (props: { directory: TreeDirectory } & NodeProps) => {
       className="directory"
       draggable={editable}
       onDragStart={startDrag(directory)}
-      onDragOver={enableDragDrop}
-      onDrop={dragDrop}
+      onDragOver={enableDragDrop(editable)}
+      onDrop={onDrop}
       title={directory.path}
     >
       <Name name={directory.name} />
@@ -74,34 +122,49 @@ const FileUI = (props: { file: TreeFile } & NodeProps) => {
 };
 
 const Name = (props: { name: string }) => {
-  return <div className="name">{props.name}</div>;
+  const { name } = props;
+  return <div className="name">{name}</div>;
 };
 
 const Contents = (props: { children: TreeNode[] } & NodeProps) => {
   const options = useContext(OptionsContext);
-  if (!options.showFiles) return <SummarizedContents {...props} />;
   const { children, editable } = props;
+
+  const renderableContents = options.showFiles
+    ? children
+    : summarizeContents(children);
 
   return (
     <div className="children">
-      {children.map((child) => {
+      {renderableContents.map((child, index) => {
         if (child instanceof TreeDirectory)
           return (
             <DirectoryUI
-              key={child.path}
+              key={child.fullPath}
               directory={child}
               editable={editable}
             />
           );
-        return <FileUI key={child.fullPath} file={child} editable={editable} />;
+
+        if (child instanceof TreeFile) {
+          return (
+            <FileUI key={child.fullPath} file={child} editable={editable} />
+          );
+        }
+
+        return (
+          <code key={index} className="file-summary">
+            {child}
+          </code>
+        );
       })}
     </div>
   );
 };
 
-const SummarizedContents = (props: { children: TreeNode[] } & NodeProps) => {
-  const { children, editable } = props;
-
+const summarizeContents = (
+  children: TreeNode[],
+): (TreeDirectory | string)[] => {
   const dirs: TreeDirectory[] = children.filter(
     (it) => it instanceof TreeDirectory,
   ) as TreeDirectory[];
@@ -113,21 +176,5 @@ const SummarizedContents = (props: { children: TreeNode[] } & NodeProps) => {
     ),
   ];
 
-  const summarized: (string | TreeDirectory)[] = [...dirs, ...fileTypes];
-
-  return (
-    <div className="children">
-      {summarized.map((child, index) => {
-        if (child instanceof TreeDirectory)
-          return (
-            <DirectoryUI key={index} directory={child} editable={editable} />
-          );
-        return (
-          <code className="file-summary" key={index}>
-            {child}
-          </code>
-        );
-      })}
-    </div>
-  );
+  return [...dirs, ...fileTypes];
 };
