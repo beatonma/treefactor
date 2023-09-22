@@ -1,4 +1,4 @@
-import { createContext, DragEvent, useContext } from "react";
+import { createContext, DragEvent, useContext, useRef } from "react";
 import { Tree, TreeDirectory, TreeFile, TreeNode, TreeNodeType } from "./data";
 import { OptionsContext } from "./options";
 
@@ -37,8 +37,9 @@ const DirectoryUI = (props: { directory: TreeDirectory } & NodeProps) => {
 
   return (
     <div
-      className="directory"
-      title={directory.path}
+      className={directory.type}
+      data-type={directory.type}
+      title={directory.fullPath}
       {...draggableProps}
       {...droppableProps}
     >
@@ -50,11 +51,15 @@ const DirectoryUI = (props: { directory: TreeDirectory } & NodeProps) => {
 
 const FileUI = (props: { file: TreeFile } & NodeProps) => {
   const { file, isEditable } = props;
-
   const draggableProps = DragDrop.draggableSourceProps(isEditable, file);
 
   return (
-    <div className="file" title={file.fullPath} {...draggableProps}>
+    <div
+      className={file.type}
+      data-type={file.type}
+      title={file.fullPath}
+      {...draggableProps}
+    >
       <Name name={file.name} />
     </div>
   );
@@ -120,23 +125,20 @@ const summarizeContents = (
 
 namespace DragDrop {
   const DragDropKey = "node";
+  const DataAttrIsDropTarget = "data-is-drop-target";
+  const DataAttrDragDropPreview = "data-drag-drop-preview";
+  const DataAttrType = "data-type";
 
   interface DragDropPayload {
     type: TreeNodeType;
     fullPath: string;
   }
 
-  const toDragDropPayload = (node: TreeNode): DragDropPayload => {
-    if (node instanceof TreeDirectory)
-      return {
-        type: "directory",
-        fullPath: node.fullPath,
-      };
-    return {
-      type: "file",
-      fullPath: node.fullPath,
-    };
-  };
+  const toDragDropPayload = (node: TreeNode): DragDropPayload => ({
+    type: node.type,
+    fullPath: node.fullPath,
+  });
+
   export const draggableSourceProps = (
     isDraggable: boolean,
     payload: TreeNode,
@@ -147,6 +149,24 @@ namespace DragDrop {
         ev.stopPropagation();
         const encoded = toDragDropPayload(payload);
         ev.dataTransfer.setData(DragDropKey, JSON.stringify(encoded));
+
+        // Customise drag preview image.
+        const target = ev.target as HTMLElement;
+        const name = target
+          .querySelector(".name")
+          ?.cloneNode(true) as HTMLElement;
+
+        if (name) {
+          const preview = document.createElement("div");
+          const type = document.createElement("div");
+          type.innerText = target.getAttribute(DataAttrType) ?? "";
+          preview.appendChild(type);
+          preview.setAttribute(DataAttrDragDropPreview, "true");
+          preview.setAttribute("aria-hidden", "true");
+          preview.appendChild(name);
+          document.body.appendChild(preview);
+          ev.dataTransfer.setDragImage(preview, 0, 0);
+        }
       },
     };
   };
@@ -158,18 +178,52 @@ namespace DragDrop {
     if (onTreeChange === undefined) {
       return {};
     }
+    const setDropTarget = (ev: DragEvent) => {
+      ev.stopPropagation();
+      (ev.currentTarget as HTMLElement).setAttribute(
+        DataAttrIsDropTarget,
+        "true",
+      );
+    };
+    const removeDropTarget = (ev: DragEvent) => {
+      ev.stopPropagation();
+
+      const element = ev.currentTarget as HTMLElement;
+      const bounds = element.getBoundingClientRect();
+      if (
+        ev.clientX < bounds.left ||
+        ev.clientX > bounds.right ||
+        ev.clientY < bounds.top ||
+        ev.clientY > bounds.bottom
+      ) {
+        element.removeAttribute(DataAttrIsDropTarget);
+      }
+    };
+    const cleanup = () => {
+      document.body
+        .querySelectorAll(`[${DataAttrIsDropTarget}]`)
+        .forEach((el) => {
+          el.removeAttribute(DataAttrIsDropTarget);
+        });
+      document.body
+        .querySelectorAll(`[${DataAttrDragDropPreview}]`)
+        .forEach((el) => document.body.removeChild(el));
+    };
 
     return {
+      "data-droppable": true,
+      onDragEnter: setDropTarget,
+      onDragLeave: removeDropTarget,
+      onDragEnd: cleanup,
       onDragOver: (ev: DragEvent) => {
         ev.preventDefault();
+        setDropTarget(ev);
       },
-
       onDrop: (ev: DragEvent) => {
         ev.preventDefault();
-        const data = JSON.parse(
-          ev.dataTransfer.getData(DragDropKey),
-        ) as DragDropPayload;
-        console.log(`onDrop ${data.type} ${data.fullPath}`);
+        cleanup();
+        const raw = ev.dataTransfer.getData(DragDropKey);
+        const data = JSON.parse(raw) as DragDropPayload;
         ev.dataTransfer.clearData();
 
         onTreeChange((prev) => {

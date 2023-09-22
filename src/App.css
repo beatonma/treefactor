@@ -49,16 +49,28 @@ textarea {
     font-size: var(--fs-large);
   }
 
+  .directory, .file {
+    position: relative;
+    width: fit-content;
+    min-width: 16ch;
+    padding-inline: 1ch;
+    border-radius: .5ch;
+
+    &::before {
+      content: "";
+      position: absolute;
+      background-color: var(--color);
+      width: 1px;
+      height: 100%;
+      top: 0;
+      left: 0;
+    }
+  }
+
   .directory {
     --color: #9b9b9b;
     margin-block: .5em;
-
-    border-left: 2px solid var(--color);
-    padding-left: 1ch;
-
-    &:has(> [draggable="true"]:hover) {
-      background-color: var(--color-hover);
-    }
+    padding: 1ch;
 
     > .name {
       font-weight: bold;
@@ -66,21 +78,10 @@ textarea {
   }
 
   .file {
-    > .name {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      font-weight: lighter;
+    --color: #d7d7d7;
 
-      &::before {
-        --size: 4px;
-        display: inline-block;
-        content: "";
-        margin-inline: var(--size);
-        width: var(--size);
-        height: var(--size);
-        background-color: var(--color);
-      }
+    > .name {
+      font-weight: lighter;
     }
   }
 
@@ -98,5 +99,36 @@ textarea {
 
   &:hover {
     background-color: var(--color-hover);
+  }
+}
+
+
+[data-is-drop-target] {
+  outline: 1px solid #ffffff;
+
+  &:has([data-is-drop-target]) {
+    outline: none;
+  }
+}
+
+
+[data-drag-drop-preview] {
+  position: absolute;
+  left: -100lvw;
+  top: -100lvh;
+  background-color: black;
+  padding: 2ch;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  .name {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    color: white;
+    font-weight: bold;
   }
 }
