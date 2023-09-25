@@ -2,19 +2,17 @@
   --fs-large: 22px;
   --fs-default: 18px;
   --fs-small: 14px;
-
-  --color-filetype: #27616d;
-  --color-hover: #ffffff22;
+  --vibrant: #fff98a;
+  --muted: #9b9b9b;
+  --hover: #ffffff22;
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-size: var(--fs-default);
-
   color-scheme: dark light;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -27,15 +25,6 @@ body {
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-h1, h2, h3 {
-  margin-inline: auto;
-  text-align: center;
-}
 
 button {
   border-radius: 8px;

@@ -1,7 +1,15 @@
 #root {
-  width: 1280px;
+  --border-width: 1px;
+
+  line-height: 1.5;
+  font-weight: 400;
   max-width: 100%;
-  margin-inline: auto
+  margin-inline: auto;
+}
+
+#root h1, #root h2 {
+  margin-inline: auto;
+  text-align: center;
 }
 
 header {
@@ -10,28 +18,37 @@ header {
 }
 
 textarea {
-  width: -webkit-fill-available;
+  width: fill-available;
   min-height: 50svh;
   resize: vertical;
 }
 
 .editor {
+  --workspace-split: 1fr 1fr;
+
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: var(--workspace-split);
+  grid-template-rows: 1fr;
   gap: 1ch;
-  margin: 1ch;
+  margin-inline: 1ch;
 
   @media (width < 800px) {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: var(--workspace-split);
   }
 }
 
 .options {
   display: flex;
   flex-flow: row wrap;
-  gap: 1ch;
+  gap: 2ch;
   justify-content: center;
+
+  .checkbox-wrapper {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 0.5ch;
+  }
 }
 
 .tree {
@@ -40,6 +57,7 @@ textarea {
   background-color: black;
   padding: 2ch;
   overflow: hidden;
+  max-width: 100%;
 
   &[data-editable="true"] {
     background-color: #151515;
@@ -62,12 +80,15 @@ textarea {
     min-width: 16ch;
     padding-inline: 1ch;
     border-radius: .5ch;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 
     &::before {
       content: "";
       position: absolute;
       background-color: var(--color);
-      width: 1px;
+      width: var(--border-width);
       height: 100%;
       top: 0;
       left: 0;
@@ -76,8 +97,12 @@ textarea {
 
   .directory {
     --color: #9b9b9b;
-    margin-block: .5em;
-    padding: 1ch;
+
+
+    &[data-is-summary="false"] {
+      margin-block: .5em;
+      padding: 1ch;
+    }
 
     > .name {
       font-weight: bold;
@@ -96,28 +121,45 @@ textarea {
     font-size: var(--fs-small);
     margin-inline-end: 1ch;
     padding: .15em .5ch;
-    background-color: var(--color-filetype);
+    background-color: var(--hover);
   }
 }
+
+
+.row {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 1ch;
+  align-items: baseline;
+}
+
+.labels {
+  font-size: var(--fs-small);
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+  max-width: 32ch;
+}
+
 
 [draggable="true"] {
   cursor: grab;
   transition: background-color 200ms;
 
-  &:hover {
-    background-color: var(--color-hover);
+  &:not(:has([draggable="true"]:hover)):hover {
+    --color: var(--vibrant);
+    --border-width: 2px;
+
+    background-color: var(--hover);
   }
 }
 
-
 [data-is-drop-target] {
-  outline: 1px solid #ffffff;
+  outline: var(--border-width) solid #ffffff;
 
   &:has([data-is-drop-target]) {
     outline: none;
   }
 }
-
 
 [data-drag-drop-preview] {
   position: absolute;
