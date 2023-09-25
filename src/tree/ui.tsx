@@ -1,4 +1,4 @@
-import { createContext, DragEvent, useContext, useRef } from "react";
+import { createContext, DragEvent, HTMLProps, useContext } from "react";
 import { Tree, TreeDirectory, TreeFile, TreeNode, TreeNodeType } from "./data";
 import { OptionsContext } from "./options";
 import { StateUpdate } from "../types.ts";
@@ -17,14 +17,17 @@ export const TreeUI = (props: { tree: Tree; onEdit?: OnTreeChange }) => {
   return (
     <OnTreeChangeContext.Provider value={onEdit}>
       <div className="tree" data-editable={editable} {...droppableProps}>
-        <Name name={tree.name} />
+        <DirectoryName directory={tree} />
         <Contents children={tree.children} isEditable={editable} />
       </div>
     </OnTreeChangeContext.Provider>
   );
 };
 
-const DirectoryUI = (props: { directory: TreeDirectory } & NodeProps) => {
+interface DirectoryProps {
+  directory: TreeDirectory;
+}
+const DirectoryUI = (props: DirectoryProps & NodeProps) => {
   const onTreeChange = useContext(OnTreeChangeContext);
   const { directory, isEditable } = props;
   const draggableProps = DragDrop.draggableSourceProps(isEditable, directory);
@@ -33,17 +36,37 @@ const DirectoryUI = (props: { directory: TreeDirectory } & NodeProps) => {
     onTreeChange,
   );
 
+  const options = useContext(OptionsContext);
+
   return (
     <div
       className={directory.type}
       data-type={directory.type}
+      data-is-summary={!options.showFiles}
       title={directory.fullPath}
       {...draggableProps}
       {...droppableProps}
     >
-      <Name name={directory.name} />
+      <DirectoryName directory={directory} />
       <Contents children={directory.children} isEditable={isEditable} />
     </div>
+  );
+};
+
+const DirectoryName = (props: DirectoryProps) => {
+  const { directory } = props;
+  const options = useContext(OptionsContext);
+
+  return (
+    <Row>
+      <Name name={directory.name} />
+      <Label
+        contents={
+          options.showDirectorySummary ? [...directory.contentDescription] : []
+        }
+        title="Contained file types"
+      />
+    </Row>
   );
 };
 
@@ -68,17 +91,27 @@ const Name = (props: { name: string }) => {
   return <div className="name">{name}</div>;
 };
 
+const Label = (props: { contents: string[] } & HTMLProps<HTMLDivElement>) => {
+  const { contents, ...rest } = props;
+
+  return (
+    <div className="labels" {...rest}>
+      {contents.join(", ")}
+    </div>
+  );
+};
+
 const Contents = (props: { children: TreeNode[] } & NodeProps) => {
   const options = useContext(OptionsContext);
   const { children, isEditable } = props;
 
   const renderableContents = options.showFiles
     ? children
-    : summarizeContents(children);
+    : children.filter((it) => it.type === "directory");
 
   return (
     <div className="children">
-      {renderableContents.map((child, index) => {
+      {renderableContents.map((child) => {
         if (child instanceof TreeDirectory)
           return (
             <DirectoryUI
@@ -88,37 +121,12 @@ const Contents = (props: { children: TreeNode[] } & NodeProps) => {
             />
           );
 
-        if (child instanceof TreeFile) {
-          return (
-            <FileUI key={child.fullPath} file={child} isEditable={isEditable} />
-          );
-        }
-
         return (
-          <code key={index} className="file-summary">
-            {child}
-          </code>
+          <FileUI key={child.fullPath} file={child} isEditable={isEditable} />
         );
       })}
     </div>
   );
-};
-
-const summarizeContents = (
-  children: TreeNode[],
-): (TreeDirectory | string)[] => {
-  const dirs: TreeDirectory[] = children.filter(
-    (it) => it instanceof TreeDirectory,
-  ) as TreeDirectory[];
-  const fileTypes = [
-    ...new Set(
-      (children.filter((it) => it instanceof TreeFile) as TreeFile[]).map(
-        (it) => it.extension,
-      ),
-    ),
-  ];
-
-  return [...dirs, ...fileTypes];
 };
 
 namespace DragDrop {
@@ -233,3 +241,10 @@ namespace DragDrop {
     };
   };
 }
+
+const Row = (props: HTMLProps<HTMLDivElement>) => {
+  const { className, ...rest } = props;
+  const _className = ["row", className].filter(Boolean).join(" ");
+
+  return <div className={_className} {...rest} />;
+};

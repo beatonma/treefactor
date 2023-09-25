@@ -1,5 +1,6 @@
 export type TreeNodeType = "directory" | "file";
 export type TreeNode = TreeDirectory | TreeFile;
+type ContentDescription = Set<string>;
 
 const TreeNodeComparator = (a: TreeNode, b: TreeNode) => {
   if (a.type === b.type) return a.name.localeCompare(b.name);
@@ -13,6 +14,11 @@ interface BaseTreeNode {
   path: string;
   fullPath: string;
   setPath: (path: string) => void;
+
+  /**
+   * File type(s) contained within this node (including itself).
+   */
+  contentDescription: ContentDescription;
 
   /**
    * Deep compare this node to the other, returns true if they represent the same structure.
@@ -47,10 +53,12 @@ export class TreeFile implements BaseTreeNode {
   path!: string;
   fullPath!: string;
   extension: string;
+  contentDescription!: ContentDescription;
 
   constructor(path: string, name: string) {
     this.name = name;
     this.extension = name.split(".").pop() ?? "";
+    this.contentDescription = new Set([this.extension]);
     this.setPath(path);
   }
 
@@ -76,13 +84,29 @@ export class TreeDirectory implements BaseTreeNode {
   path!: string;
   fullPath!: string;
   private _children!: TreeNode[];
+  private _contentDescription!: ContentDescription;
 
   protected set children(children: TreeNode[]) {
     this._children = [...children];
-    this._children.sort(TreeNodeComparator);
+    this.onChildrenUpdated();
   }
   get children() {
     return this._children;
+  }
+  private set contentDescription(description: ContentDescription) {
+    this._contentDescription = description;
+  }
+  get contentDescription(): ContentDescription {
+    return this._contentDescription;
+  }
+  private onChildrenUpdated() {
+    this._children.sort(TreeNodeComparator);
+    this._contentDescription = new Set();
+    this._children.forEach((child) => {
+      child.contentDescription.forEach((cd) =>
+        this._contentDescription.add(cd),
+      );
+    });
   }
 
   constructor(
@@ -116,13 +140,14 @@ export class TreeDirectory implements BaseTreeNode {
   addChild = (node: TreeNode) => {
     node.setPath(this.fullPath);
     this.children.push(node);
-    this.children.sort(TreeNodeComparator);
+    this.onChildrenUpdated();
   };
 
   removeChild = (child: TreeNode) => {
     this.children = this.children.filter(
       (it) => it.fullPath !== child.fullPath,
     );
+    this.onChildrenUpdated();
   };
 
   isDescendantOf = (other: TreeDirectory): boolean => {
