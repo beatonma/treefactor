@@ -1,17 +1,15 @@
 import { createContext, DragEvent, useContext, useRef } from "react";
 import { Tree, TreeDirectory, TreeFile, TreeNode, TreeNodeType } from "./data";
 import { OptionsContext } from "./options";
+import { StateUpdate } from "../types.ts";
 
-type OnTreeChange = (update: (prev: Tree) => Tree) => void;
+type OnTreeChange = StateUpdate<Tree>;
 const OnTreeChangeContext = createContext<OnTreeChange | undefined>(undefined);
 
 interface NodeProps {
   isEditable: boolean;
 }
-export const TreeUI = (props: {
-  tree: Tree;
-  onEdit?: (update: (prev: Tree) => Tree) => void;
-}) => {
+export const TreeUI = (props: { tree: Tree; onEdit?: OnTreeChange }) => {
   const { tree, onEdit } = props;
   const droppableProps = DragDrop.dropTargetProps(tree.fullPath, onEdit);
   const editable = onEdit !== undefined;
