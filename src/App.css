@@ -27,6 +27,13 @@ textarea {
   }
 }
 
+.options {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 1ch;
+  justify-content: center;
+}
+
 .tree {
   border: 1px solid #393939;
   border-radius: 1ch;
