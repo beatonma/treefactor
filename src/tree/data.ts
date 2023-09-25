@@ -13,7 +13,7 @@ interface BaseTreeNode {
   name: string;
   path: string;
   fullPath: string;
-  setPath: (path: string) => void;
+  setPath: (path: string, propagate?: boolean) => void;
 
   /**
    * File type(s) contained within this node (including itself).
@@ -115,7 +115,7 @@ export class TreeDirectory implements BaseTreeNode {
     children: TreeNode[] | (() => TreeNode[]),
   ) {
     this.name = name;
-    this.setPath(path);
+    this.setPath(path, false);
     this.children = typeof children === "function" ? children() : children;
   }
 
@@ -132,9 +132,12 @@ export class TreeDirectory implements BaseTreeNode {
       this.children.map((it) => it.clone()),
     );
 
-  setPath = (path: string) => {
+  setPath = (path: string, propagate: boolean = true) => {
     this.path = Path.dirPath(path);
     this.fullPath = Path.dirPath(Path.joinPath(path, this.name));
+    if (propagate) {
+      this.children.forEach((child) => child.setPath(this.fullPath, propagate));
+    }
   };
 
   addChild = (node: TreeNode) => {
@@ -227,7 +230,6 @@ export class Tree extends TreeDirectory {
 
     if (!newParent) return;
     if (!oldParent) return;
-    if (newParent.fullPath === oldParent.fullPath) return;
     if (obj instanceof TreeDirectory && newParent.isDescendantOf(obj)) return;
 
     const movedObj = obj.clone();

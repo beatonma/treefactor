@@ -133,20 +133,41 @@ describe("Tree data", () => {
       );
     });
 
-    test("Move to same directory fails", () => {
-      expectMoveFail(
-        testTree(),
-        "beatonma-gulp/src/raw assets/app-type/",
-        "beatonma-gulp/src/raw assets/",
-      );
-    });
-
     test("Move directory to descendant directory fails", () => {
       expectMoveFail(
         testTree(),
         "beatonma-gulp/src/raw assets/apps/",
         "beatonma-gulp/src/raw assets/apps/android/",
       );
+    });
+
+    test("Moving a directory updates paths of its children", () => {
+      const tree = testTree();
+
+      tree.move(
+        "beatonma-gulp/src/raw assets/apps/android/",
+        "beatonma-gulp/src/raw assets/app-type/",
+      );
+
+      expect(
+        tree.findNode("beatonma-gulp/src/raw assets/apps/android/"),
+      ).toBeUndefined();
+      expect(
+        tree.findNode("beatonma-gulp/src/raw assets/apps/android/io16.svg"),
+      ).toBeUndefined();
+      expect(
+        tree.findNode("beatonma-gulp/src/raw assets/apps/android/form.svg"),
+      ).toBeUndefined();
+
+      expect(
+        tree.findNode("beatonma-gulp/src/raw assets/app-type/android/"),
+      ).toBeDefined();
+      expect(
+        tree.findNode("beatonma-gulp/src/raw assets/app-type/android/io16.svg"),
+      ).toBeDefined();
+      expect(
+        tree.findNode("beatonma-gulp/src/raw assets/app-type/android/form.svg"),
+      ).toBeDefined();
     });
   });
 
