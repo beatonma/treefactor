@@ -8,6 +8,8 @@
   --hover: #ffffff22;
   --warn: #4d2331;
   --on-warn: var(--text-primary);
+  --green: #16b06b;
+  --red: #ee4545;
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

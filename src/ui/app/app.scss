@@ -183,24 +183,13 @@
     }
   }
 
-  [data-drag-drop-preview] {
-    position: absolute;
-    left: -100lvw;
-    top: -100lvh;
-    background-color: black;
-    padding: 2ch;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+  [data-droppable-state="success"] {
+    // important to force override of :hover.
+    background-color: var(--green) !important;
+  }
 
-    .name {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      background-color: black;
-      color: white;
-      font-weight: bold;
-    }
+  [data-droppable-state="failure"] {
+    // important to force override of :hover.
+    background-color: var(--red) !important;
   }
 }

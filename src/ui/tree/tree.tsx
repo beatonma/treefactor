@@ -1,6 +1,6 @@
 import React, { createContext, HTMLProps, useContext } from "react";
 import { OnTreeChange } from "./types";
-import { dropTargetProps, draggableSourceProps } from "./drag-drop";
+import { useDropTargetProps, draggableSourceProps } from "./drag-drop";
 import { Tree, TreeDirectory, TreeFile, TreeNode } from "src/tree";
 import { OptionsContext } from "src/ui/options";
 
@@ -12,7 +12,7 @@ interface NodeProps {
 
 export const TreeUI = (props: { tree: Tree; onEdit?: OnTreeChange }) => {
   const { tree, onEdit } = props;
-  const droppableProps = dropTargetProps(tree.fullPath, onEdit);
+  const droppableProps = useDropTargetProps(tree.fullPath, onEdit);
   const editable = onEdit !== undefined;
 
   return (
@@ -32,7 +32,7 @@ const DirectoryUI = (props: DirectoryProps & NodeProps) => {
   const onTreeChange = useContext(OnTreeChangeContext);
   const { directory, isEditable } = props;
   const draggableProps = draggableSourceProps(isEditable, directory);
-  const droppableProps = dropTargetProps(directory.fullPath, onTreeChange);
+  const droppableProps = useDropTargetProps(directory.fullPath, onTreeChange);
 
   const options = useContext(OptionsContext);
 

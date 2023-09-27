@@ -1,4 +1,4 @@
-import { DragEvent } from "react";
+import { DragEvent, useEffect, useState } from "react";
 import { TreeNode, TreeNodeType } from "src/tree";
 import { OnTreeChange } from "./types";
 
@@ -49,13 +49,25 @@ export const draggableSourceProps = (
   };
 };
 
-export const dropTargetProps = (
+type DropTargetState = undefined | "success" | "failure";
+export const useDropTargetProps = (
   targetPath: string,
   onTreeChange: OnTreeChange | undefined,
 ) => {
+  const [state, setState] = useState<DropTargetState>();
+
+  useEffect(() => {
+    if (state) {
+      setTimeout(() => {
+        setState(undefined);
+      }, 300);
+    }
+  }, [state]);
+
   if (onTreeChange === undefined) {
     return {};
   }
+
   const setDropTarget = (ev: DragEvent) => {
     ev.stopPropagation();
     (ev.currentTarget as HTMLElement).setAttribute(
@@ -65,6 +77,7 @@ export const dropTargetProps = (
   };
   const removeDropTarget = (ev: DragEvent) => {
     ev.stopPropagation();
+    ev.preventDefault();
 
     const element = ev.currentTarget as HTMLElement;
     const bounds = element.getBoundingClientRect();
@@ -88,14 +101,17 @@ export const dropTargetProps = (
 
   return {
     "data-droppable": true,
+    "data-droppable-state": state,
     onDragEnter: setDropTarget,
     onDragLeave: removeDropTarget,
     onDragEnd: cleanup,
     onDragOver: (ev: DragEvent) => {
+      ev.stopPropagation();
       ev.preventDefault();
       setDropTarget(ev);
     },
     onDrop: (ev: DragEvent) => {
+      ev.stopPropagation();
       ev.preventDefault();
       cleanup();
       const raw = ev.dataTransfer.getData(DragDropKey);
@@ -104,7 +120,9 @@ export const dropTargetProps = (
 
       onTreeChange(prev => {
         const tree = prev.clone();
-        tree.move(data.fullPath, targetPath);
+        const result = tree.move(data.fullPath, targetPath);
+        setState(result === undefined ? "failure" : "success");
+
         return tree;
       });
     },
