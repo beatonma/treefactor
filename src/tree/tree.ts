@@ -1,3 +1,5 @@
+import * as Path from "./path";
+
 export type TreeNodeType = "directory" | "file";
 export type TreeNode = TreeDirectory | TreeFile;
 type ContentDescription = Set<string>;
@@ -102,10 +104,8 @@ export class TreeDirectory implements BaseTreeNode {
   private onChildrenUpdated() {
     this._children.sort(TreeNodeComparator);
     this._contentDescription = new Set();
-    this._children.forEach((child) => {
-      child.contentDescription.forEach((cd) =>
-        this._contentDescription.add(cd),
-      );
+    this._children.forEach(child => {
+      child.contentDescription.forEach(cd => this._contentDescription.add(cd));
     });
   }
 
@@ -122,21 +122,21 @@ export class TreeDirectory implements BaseTreeNode {
   size: () => number = () =>
     1 +
     this.children
-      .map((it) => it.size())
+      .map(it => it.size())
       .reduce((accumulator, current) => accumulator + current, 0);
 
   clone = (): TreeDirectory =>
     new TreeDirectory(
       this.path,
       this.name,
-      this.children.map((it) => it.clone()),
+      this.children.map(it => it.clone()),
     );
 
   setPath = (path: string, propagate: boolean = true) => {
     this.path = Path.dirPath(path);
     this.fullPath = Path.dirPath(Path.joinPath(path, this.name));
     if (propagate) {
-      this.children.forEach((child) => child.setPath(this.fullPath, propagate));
+      this.children.forEach(child => child.setPath(this.fullPath, propagate));
     }
   };
 
@@ -147,9 +147,7 @@ export class TreeDirectory implements BaseTreeNode {
   };
 
   removeChild = (child: TreeNode) => {
-    this.children = this.children.filter(
-      (it) => it.fullPath !== child.fullPath,
-    );
+    this.children = this.children.filter(it => it.fullPath !== child.fullPath);
     this.onChildrenUpdated();
   };
 
@@ -168,7 +166,7 @@ export class TreeDirectory implements BaseTreeNode {
 
   contains = (substring: string): boolean =>
     this.name.includes(substring) ||
-    this.children.some((it) => it.contains(substring));
+    this.children.some(it => it.contains(substring));
 
   equivalentTo = (other: BaseTreeNode) => {
     if (!(other instanceof TreeDirectory)) return false;
@@ -188,7 +186,7 @@ export class TreeDirectory implements BaseTreeNode {
   toString = () => this.fullPath;
   toPrettyString = (joiner: string = "\n"): string => {
     const indent = "  ";
-    const childStrings = this.children.map((it) => {
+    const childStrings = this.children.map(it => {
       if (it instanceof TreeDirectory)
         return it.toPrettyString(joiner + indent);
       return it.name;
@@ -211,7 +209,7 @@ export class Tree extends TreeDirectory {
   clone = (): Tree =>
     new Tree(
       this.name,
-      this.children.map((it) => it.clone()),
+      this.children.map(it => it.clone()),
     );
 
   /**
@@ -244,18 +242,4 @@ export class Tree extends TreeDirectory {
     );
     return movedObj.fullPath;
   };
-}
-
-export namespace Path {
-  export const isDescendant = (
-    parentPath: string,
-    nodePath: string,
-  ): boolean => {
-    return nodePath.startsWith(parentPath) && nodePath !== parentPath;
-  };
-
-  export const dirPath = (path: string) =>
-    path.endsWith("/") ? path : `${path}/`;
-  export const joinPath = (root: string, node: string) =>
-    `${dirPath(root)}${node}`;
 }

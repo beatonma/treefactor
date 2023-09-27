@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { Path, Tree, TreeDirectory, TreeFile } from "./data";
+import { Tree, TreeDirectory, TreeFile } from "./tree";
+import * as Path from "./path";
 import { parseTree } from "./parse";
 
 const Data: string = `[
@@ -35,7 +36,7 @@ const testParsedTree = (tree: Tree) => {
   expect(tree.children.length).toBe(3);
 
   const appTypeDir = tree.children.find(
-    (it) => it.name === "app-type",
+    it => it.name === "app-type",
   ) as TreeDirectory;
   expect(appTypeDir.name).toBe("app-type");
   expect(appTypeDir.fullPath).toBe("beatonma-gulp/src/raw assets/app-type/");

@@ -1,25 +1,8 @@
-import { Options } from "./tree";
-import { useId } from "react";
-import { StateUpdate } from "src/types.ts";
+import React, { useId } from "react";
+import { Options } from "src/tree";
+import { StateUpdate } from "src/ui/types";
 
-export const OptionsUI = (props: {
-  options: Options;
-  setOptions: StateUpdate<Options>;
-}) => {
-  const { options, setOptions } = props;
-
-  return (
-    <>
-      <div className="options">
-        {(Object.keys(options) as (keyof Options)[]).map((field) => (
-          <Checkbox {...checkboxProps(field, options, setOptions)} />
-        ))}
-      </div>
-    </>
-  );
-};
-
-const checkboxProps = (
+export const checkboxProps = (
   field: keyof Options,
   options: Options,
   setOptions: StateUpdate<Options>,
@@ -43,7 +26,7 @@ interface CheckboxProps {
   isChecked: boolean;
   onChange: () => void;
 }
-const Checkbox = (props: CheckboxProps) => {
+export const Checkbox = (props: CheckboxProps) => {
   const { name, isChecked, onChange } = props;
   const id = useId();
 

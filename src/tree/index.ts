@@ -1,5 +1,5 @@
-export { TreeUI } from "./ui";
-export { Tree } from "./data";
+export { Tree, TreeDirectory, TreeFile } from "./tree";
+export type { TreeNode, TreeNodeType } from "./tree";
 export { parseTree } from "./parse";
-export { DefaultOptions, OptionsContext, useOptions } from "./options";
+export { DefaultOptions } from "./options";
 export type { Options } from "./options";

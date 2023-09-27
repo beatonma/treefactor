@@ -2,22 +2,25 @@
   --fs-large: 22px;
   --fs-default: 18px;
   --fs-small: 14px;
+  --text-primary: rgb(255 255 255 / 87%);
   --vibrant: #fff98a;
   --muted: #9b9b9b;
   --hover: #ffffff22;
+  --warn: #4d2331;
+  --on-warn: var(--text-primary);
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-size: var(--fs-default);
   color-scheme: dark light;
-  color: rgba(255, 255, 255, 0.87);
+  color: var(--text-primary);
   background-color: #242424;
   font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  text-rendering: optimizelegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -25,24 +28,7 @@ body {
   min-height: 100vh;
 }
 
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 180ms;
-}
-
-button:hover {
-  border-color: #646cff;
-}
-
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+code {
+  background-color: black;
+  margin-inline: .5ch;
 }

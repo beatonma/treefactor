@@ -1,9 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
-import "./index.css";
+import { App } from "src/ui/app";
 
-const ContainerID = "refactor-tool_container";
+const ContainerID = "treefactor_container";
 
 const attachApp = (dom: Document = document) => {
   const container = dom.getElementById(ContainerID);
@@ -11,7 +10,9 @@ const attachApp = (dom: Document = document) => {
     const root = ReactDOM.createRoot(container);
     root.render(
       <React.StrictMode>
-        <App />
+        <div className="treefactor">
+          <App />
+        </div>
       </React.StrictMode>,
     );
   }

@@ -1,11 +1,5 @@
-import {
-  Path,
-  Tree,
-  TreeDirectory,
-  TreeFile,
-  TreeNode,
-  TreeNodeType,
-} from "./data";
+import { Tree, TreeDirectory, TreeFile, TreeNode, TreeNodeType } from "./tree";
+import { joinPath } from "./path";
 
 export const parseTree = (data: string): Tree => {
   return parseTreeJson(data) ?? new Tree("empty root", []);
@@ -29,8 +23,8 @@ const parseTreeJson = (json: string): Tree | undefined => {
           path,
           branch.name,
           () =>
-            branch.contents?.map((it) =>
-              parseBranch(Path.joinPath(path, branch.name), it),
+            branch.contents?.map(it =>
+              parseBranch(joinPath(path, branch.name), it),
             ) ?? [],
         );
       case "file":
@@ -40,6 +34,6 @@ const parseTreeJson = (json: string): Tree | undefined => {
 
   const raw = JSON.parse(json);
   const root: TreeJson = raw[0];
-  const children = root.contents!.map((it) => parseBranch(root.name, it));
+  const children = root.contents!.map(it => parseBranch(root.name, it));
   return new Tree(root.name, children);
 };
