@@ -1,51 +1,50 @@
 import { describe, expect, test } from "bun:test";
 import { Tree, TreeDirectory, TreeFile } from "./tree";
-import * as Path from "./path";
 import { parseTree } from "./parse";
 
-const Data: string = `[
-  {"type":"directory","name":"beatonma-gulp/src/raw assets","contents":[
-    {"type":"directory","name":"apps","contents":[
-      {"type":"directory","name":"android","contents":[
-        {"type":"file","name":"form.svg"},
-        {"type":"file","name":"io16.svg"}
-      ]},
-      {"type":"file","name":"microformats-reader.svg"}
+const Data = `[
+  {"type":"directory","name":"root","contents":[
+    {"type":"directory","name":"a","contents":[
+      {"type":"directory","name":"1","contents":[
+        {"type":"file","name":"image.jpg"},
+        {"type":"file","name":"image.png"}
+    ]},
+      {"type":"directory","name":"2"},
+      {"type":"directory","name":"duplicate-dir","contents":[
+        {"type":"file","name":"nested-duplicate"}
+    ]},
+      {"type":"file","name":"duplicate.txt"},
+      {"type":"file","name":"icon.svg"}
   ]},
-    {"type":"directory","name":"app-type","contents":[
-      {"type":"file","name":"android.svg"},
-      {"type":"file","name":"arduino.svg"},
-      {"type":"file","name":"chrome.svg"},
-      {"type":"file","name":"django.svg"},
-      {"type":"file","name":"node-js.svg"},
-      {"type":"file","name":"webapp.png"},
-      {"type":"file","name":"python.svg"},
-      {"type":"file","name":"webapp.svg"}
+    {"type":"directory","name":"b","contents":[
+      {"type":"directory","name":"1","contents":[
+        {"type":"file","name":"file.txt"}
+    ]},
+      {"type":"directory","name":"duplicate-dir","contents":[
+        {"type":"file","name":"nested-duplicate"}
+    ]},
+      {"type":"file","name":"duplicate.txt"},
+      {"type":"file","name":"file.md"}
   ]},
-    {"type":"file","name":"mb.svg"}
+    {"type":"file","name":"file.dat"}
   ]}
 ,
-  {"type":"report","directories":2,"files":11}
-]
-`;
+  {"type":"report","directories":7,"files":10}
+]`;
 
 const testTree = () => parseTree(Data);
 
 const testParsedTree = (tree: Tree) => {
-  expect(tree.name).toBe("beatonma-gulp/src/raw assets");
+  expect(tree.name).toBe("root");
   expect(tree.children.length).toBe(3);
 
-  const appTypeDir = tree.children.find(
-    it => it.name === "app-type",
-  ) as TreeDirectory;
-  expect(appTypeDir.name).toBe("app-type");
-  expect(appTypeDir.fullPath).toBe("beatonma-gulp/src/raw assets/app-type/");
-  expect(appTypeDir.children.length).toBe(8);
+  const dir = tree.children.find(it => it.name === "a") as TreeDirectory;
+  expect(dir.name).toBe("a");
+  expect(dir.fullPath).toBe("root/a/");
+  expect(dir.children.length).toBe(5);
 
-  const file = appTypeDir.children[0] as TreeFile;
-  expect(file.fullPath).toBe(
-    "beatonma-gulp/src/raw assets/app-type/android.svg",
-  );
+  const file = dir.children.find(it => it.name === "icon.svg") as TreeFile;
+  expect(file.fullPath).toBe("root/a/icon.svg");
   expect(file.extension).toBe("svg");
 };
 
@@ -66,26 +65,21 @@ describe("Tree data", () => {
 
   test("TreeNode.find", () => {
     const tree = testTree();
-    expect(tree.findNode("beatonma-")).toBeUndefined();
-    expect(tree.findNode("beatonma-gulp/src/raw assets/app-type/")?.name).toBe(
-      "app-type",
-    );
-    expect(
-      tree.findNode("beatonma-gulp/src/raw assets/app-type/android.svg")?.name,
-    ).toBe("android.svg");
+    expect(tree.findNode("c")).toBeUndefined();
+    expect(tree.findNode("root/a/1/")!.name).toBe("1");
+    expect(tree.findNode("root/a/1/image.png")!.name).toBe("image.png");
   });
 
   test("TreeNode.contains", () => {
     const tree = testTree();
-    expect(tree.contains("beatonma-")).toBeTrue();
-    expect(tree.contains("app-type")).toBeTrue();
-    expect(tree.contains("webapp.svg")).toBeTrue();
-
-    expect(tree.contains("webapps.svg")).toBeFalse();
+    expect(tree.contains("2")).toBeTrue();
+    expect(tree.contains("missing")).toBeFalse();
+    expect(tree.contains("image.jpg")).toBeTrue();
+    expect(tree.contains("image.bmp")).toBeFalse();
   });
 
   test("TreeDirectory.size", () => {
-    expect(testTree().size()).toBe(16);
+    expect(testTree().size()).toBe(18);
   });
 
   describe("Tree.move", () => {
@@ -111,81 +105,32 @@ describe("Tree data", () => {
     };
 
     test("Move file to parent directory succeeds", () => {
-      expectMoveSuccess(
-        testTree(),
-        "beatonma-gulp/src/raw assets/app-type/android.svg",
-        "beatonma-gulp/src/raw assets/",
-      );
+      expectMoveSuccess(testTree(), "root/a/1/image.jpg", "root/a/");
     });
 
     test("Move directory to parent directory succeeds", () => {
-      expectMoveSuccess(
-        testTree(),
-        "beatonma-gulp/src/raw assets/apps/android/",
-        "beatonma-gulp/src/raw assets/",
-      );
+      expectMoveSuccess(testTree(), "root/a/2/", "root/");
     });
 
     test("Move to sibling directory succeeds", () => {
-      expectMoveSuccess(
-        testTree(),
-        "beatonma-gulp/src/raw assets/apps/android/",
-        "beatonma-gulp/src/raw assets/app-type/",
-      );
+      expectMoveSuccess(testTree(), "root/a/2/", "root/b/");
     });
 
     test("Move directory to descendant directory fails", () => {
-      expectMoveFail(
-        testTree(),
-        "beatonma-gulp/src/raw assets/apps/",
-        "beatonma-gulp/src/raw assets/apps/android/",
-      );
+      expectMoveFail(testTree(), "root/a/", "root/a/2/");
     });
 
     test("Moving a directory updates paths of its children", () => {
       const tree = testTree();
 
-      tree.move(
-        "beatonma-gulp/src/raw assets/apps/android/",
-        "beatonma-gulp/src/raw assets/app-type/",
-      );
+      tree.move("root/a/1/", "root/a/2/");
+      expect(tree.findNode("root/a/1/")).toBeUndefined();
+      expect(tree.findNode("root/a/1/image.jpg")).toBeUndefined();
+      expect(tree.findNode("root/a/1/image.png")).toBeUndefined();
 
-      expect(
-        tree.findNode("beatonma-gulp/src/raw assets/apps/android/"),
-      ).toBeUndefined();
-      expect(
-        tree.findNode("beatonma-gulp/src/raw assets/apps/android/io16.svg"),
-      ).toBeUndefined();
-      expect(
-        tree.findNode("beatonma-gulp/src/raw assets/apps/android/form.svg"),
-      ).toBeUndefined();
-
-      expect(
-        tree.findNode("beatonma-gulp/src/raw assets/app-type/android/"),
-      ).toBeDefined();
-      expect(
-        tree.findNode("beatonma-gulp/src/raw assets/app-type/android/io16.svg"),
-      ).toBeDefined();
-      expect(
-        tree.findNode("beatonma-gulp/src/raw assets/app-type/android/form.svg"),
-      ).toBeDefined();
+      expect(tree.findNode("root/a/2/1/")).toBeDefined();
+      expect(tree.findNode("root/a/2/1/image.jpg")).toBeDefined();
+      expect(tree.findNode("root/a/2/1/image.png")).toBeDefined();
     });
-  });
-
-  test("TreeNode.size()", () => {
-    expect(testTree().size()).toBe(16);
-  });
-});
-
-describe("Path", () => {
-  test("isDescendant", () => {
-    expect(Path.isDescendant("/root/", "/root/subdir/")).toBeTrue();
-    expect(Path.isDescendant("/root/", "/root/subdir/file.mp3")).toBeTrue();
-    expect(Path.isDescendant("/root/sub/", "/root/sub/file.mp3")).toBeTrue();
-    expect(Path.isDescendant("/root/", "/root/file.mp3")).toBeTrue();
-
-    expect(Path.isDescendant("/root/", "/root/")).toBeFalse();
-    expect(Path.isDescendant("/root/subdir/file.mp3", "/root/")).toBeFalse();
-    expect(Path.isDescendant("/root/subdir/file.mp3", "/root/")).toBeFalse();
   });
 });
