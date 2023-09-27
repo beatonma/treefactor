@@ -1,4 +1,4 @@
-import React, { ReactNode, useRef, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { parseTree, Tree } from "src/tree";
 import { OptionsUI, TreeUI } from "src/ui";
 import { OptionsContext, useOptions } from "src/ui/options";
@@ -10,7 +10,6 @@ const ExampleTree = `[
     {"type":"file","name":"bun.lockb"},
     {"type":"file","name":"index.html"},
     {"type":"file","name":"package.json"},
-    {"type":"file","name":"package-lock.json"},
     {"type":"directory","name":"public","contents":[
       {"type":"file","name":"favicon.svg"},
       {"type":"file","name":"index.css"}
@@ -23,6 +22,8 @@ const ExampleTree = `[
         {"type":"file","name":"index.ts"},
         {"type":"file","name":"options.ts"},
         {"type":"file","name":"parse.ts"},
+        {"type":"file","name":"path.test.ts"},
+        {"type":"file","name":"path.ts"},
         {"type":"file","name":"tree.test.ts"},
         {"type":"file","name":"tree.ts"}
     ]},
@@ -46,8 +47,7 @@ const ExampleTree = `[
           {"type":"file","name":"types.ts"}
       ]},
         {"type":"file","name":"types.ts"}
-    ]},
-      {"type":"file","name":"vite-env.d.ts"}
+    ]}
   ]},
     {"type":"file","name":"tsconfig.json"},
     {"type":"file","name":"webpack.dev.js"}
@@ -55,20 +55,29 @@ const ExampleTree = `[
 ,
   {"type":"report","directories":7,"files":31}
 ]
-
 `;
 const TreeUtilityCommand = () => <code>tree . -J</code>;
+const LocalStorageKey = "treefactor_json";
 
 export const App = () => {
-  const [treeText, setTreeText] = useState("");
+  const [treeText, setTreeText] = useState(
+    window.localStorage.getItem(LocalStorageKey) ?? "",
+  );
   const [initialTree, setInitialTree] = useState<Tree>();
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const [errorMessage, setErrorMessage] = useState<ReactNode>();
+
+  useEffect(() => {
+    window.localStorage.setItem(LocalStorageKey, treeText);
+  }, [treeText]);
 
   if (initialTree) {
     return (
       <>
         <MainHeader />
+        <button onClick={() => setInitialTree(undefined)} type="reset">
+          Reset
+        </button>
         <Editor initialTree={initialTree} />
       </>
     );
