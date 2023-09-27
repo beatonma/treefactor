@@ -231,6 +231,12 @@ export class Tree extends TreeDirectory {
     if (obj instanceof TreeDirectory && newParent.isDescendantOf(obj)) return;
 
     const movedObj = obj.clone();
+
+    movedObj.setPath(newParent.fullPath);
+    if (newParent.findNode(movedObj.fullPath)) {
+      return;
+    }
+
     oldParent.removeChild(obj);
     newParent.addChild(movedObj);
 

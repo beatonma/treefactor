@@ -11,7 +11,8 @@ const Data = `[
     ]},
       {"type":"directory","name":"2"},
       {"type":"directory","name":"duplicate-dir","contents":[
-        {"type":"file","name":"nested-duplicate"}
+        {"type":"file","name":"nested-duplicate"},
+        {"type":"file","name":"file.txt"}
     ]},
       {"type":"file","name":"duplicate.txt"},
       {"type":"file","name":"icon.svg"}
@@ -29,8 +30,9 @@ const Data = `[
     {"type":"file","name":"file.dat"}
   ]}
 ,
-  {"type":"report","directories":7,"files":10}
+  {"type":"report","directories":7,"files":11}
 ]`;
+const DataSize = 19;
 
 const testTree = () => parseTree(Data);
 
@@ -79,7 +81,7 @@ describe("Tree data", () => {
   });
 
   test("TreeDirectory.size", () => {
-    expect(testTree().size()).toBe(18);
+    expect(testTree().size()).toBe(DataSize);
   });
 
   describe("Tree.move", () => {
@@ -131,6 +133,18 @@ describe("Tree data", () => {
       expect(tree.findNode("root/a/2/1/")).toBeDefined();
       expect(tree.findNode("root/a/2/1/image.jpg")).toBeDefined();
       expect(tree.findNode("root/a/2/1/image.png")).toBeDefined();
+    });
+
+    test("Moving a duplicate file fails", () => {
+      const tree = testTree();
+
+      expectMoveFail(tree, "root/a/duplicate.txt", "root/b/");
+    });
+
+    test("Moving a duplicate directory fails", () => {
+      const tree = testTree();
+
+      expectMoveFail(tree, "root/a/2/duplicate-dir/", "root/b/");
     });
   });
 });
