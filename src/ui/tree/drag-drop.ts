@@ -70,10 +70,15 @@ export const useDropTargetProps = (
 
   const setDropTarget = (ev: DragEvent) => {
     ev.stopPropagation();
-    (ev.currentTarget as HTMLElement).setAttribute(
-      DataAttrIsDropTarget,
-      "true",
-    );
+    const element = ev.currentTarget as HTMLElement;
+
+    document.body.querySelectorAll(`[${DataAttrIsDropTarget}]`).forEach(el => {
+      if (el !== element) {
+        el.removeAttribute(DataAttrIsDropTarget);
+      }
+    });
+
+    element.setAttribute(DataAttrIsDropTarget, "true");
   };
   const removeDropTarget = (ev: DragEvent) => {
     ev.stopPropagation();

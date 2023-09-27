@@ -168,6 +168,7 @@
     transition: background-color 200ms;
 
     &:not(:has([draggable="true"]:hover)):hover {
+      // Highlight only the element under the pointer, not any parents.
       --color: var(--vibrant);
       --border-width: 2px;
 
@@ -177,10 +178,6 @@
 
   [data-is-drop-target] {
     outline: var(--border-width) solid #ffffff;
-
-    &:has([data-is-drop-target]) {
-      outline: none;
-    }
   }
 
   [data-droppable-state="success"] {
