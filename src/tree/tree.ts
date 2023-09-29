@@ -1,4 +1,5 @@
 import * as Path from "./path";
+import { dumpTree, parseTree } from "src/tree/parse";
 
 export type TreeNodeType = "directory" | "file";
 export type TreeNode = TreeDirectory | TreeFile;
@@ -248,4 +249,8 @@ export class Tree extends TreeDirectory {
     );
     return movedObj.fullPath;
   };
+
+  static parse = (repr: string): Tree => parseTree(repr);
+
+  stringify = (): string => dumpTree(this);
 }

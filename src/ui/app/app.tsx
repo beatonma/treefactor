@@ -1,7 +1,14 @@
-import React, { ReactNode, useEffect, useRef, useState } from "react";
-import { parseTree, Tree } from "src/tree";
+import React, { ReactNode, useRef, useState } from "react";
+import { Tree } from "src/tree";
 import { OptionsUI, TreeUI } from "src/ui";
 import { OptionsContext, useOptions } from "src/ui/options";
+import {
+  removeSaved,
+  isSaved,
+  PersistenceKey,
+  usePersistentString,
+  usePersistentTree,
+} from "src/persistence";
 import "./app.scss";
 
 const ExampleTree = `[
@@ -57,31 +64,53 @@ const ExampleTree = `[
 ]
 `;
 const TreeUtilityCommand = () => <code>tree . -J</code>;
-const LocalStorageKey = "treefactor_json";
 
 export const App = () => {
-  const [treeText, setTreeText] = useState(
-    window.localStorage.getItem(LocalStorageKey) ?? "",
+  const [treeText, setTreeText] = usePersistentString(
+    PersistenceKey.InitialTree,
+    "",
   );
-  const [initialTree, setInitialTree] = useState<Tree>();
+  const [initialTree, setInitialTree] = useState<Tree | undefined>(
+    isSaved(PersistenceKey.EditedTree) ? Tree.parse(treeText) : undefined,
+  );
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const [errorMessage, setErrorMessage] = useState<ReactNode>();
 
-  useEffect(() => {
-    window.localStorage.setItem(LocalStorageKey, treeText);
-  }, [treeText]);
-
   if (initialTree) {
+    const onClickReset = () => {
+      setInitialTree(undefined);
+      removeSaved(PersistenceKey.EditedTree);
+    };
+
     return (
       <>
         <MainHeader />
-        <button onClick={() => setInitialTree(undefined)} type="reset">
+        <button onClick={onClickReset} type="reset">
           Reset
         </button>
         <Editor initialTree={initialTree} />
       </>
     );
   }
+
+  const onClickEditButton = () => {
+    try {
+      const tree = Tree.parse(textAreaRef?.current?.value ?? "");
+      setInitialTree(tree);
+
+      setErrorMessage(undefined);
+    } catch (e) {
+      setErrorMessage(
+        <div className="tree-error">
+          <p>{`Parsing error: ${e}`}</p>
+          <p>
+            Please check that the data above matches the output of{" "}
+            <TreeUtilityCommand />.
+          </p>
+        </div>,
+      );
+    }
+  };
 
   return (
     <div className="init">
@@ -97,26 +126,7 @@ export const App = () => {
         />
 
         <p className="tree-error">{errorMessage}</p>
-        <button
-          type="button"
-          onClick={() => {
-            try {
-              const tree = parseTree(textAreaRef?.current?.value ?? "");
-              setInitialTree(tree);
-              setErrorMessage(undefined);
-            } catch (e) {
-              setErrorMessage(
-                <div className="tree-error">
-                  <p>{`Parsing error: ${e}`}</p>
-                  <p>
-                    Please check that the data above matches the output of{" "}
-                    <TreeUtilityCommand />.
-                  </p>
-                </div>,
-              );
-            }
-          }}
-        >
+        <button type="button" onClick={onClickEditButton}>
           Start editing
         </button>
       </form>
@@ -151,7 +161,10 @@ const Introduction = (props: { onClickShowExample: () => void }) => (
 
 const Editor = (props: { initialTree: Tree }) => {
   const { initialTree } = props;
-  const [editableTree, setEditableTree] = useState<Tree>(initialTree);
+  const [editableTree, setEditableTree] = usePersistentTree(
+    PersistenceKey.EditedTree,
+    initialTree,
+  );
   const [options, setOptions] = useOptions();
 
   return (

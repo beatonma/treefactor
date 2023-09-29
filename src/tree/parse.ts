@@ -2,7 +2,38 @@ import { Tree, TreeDirectory, TreeFile, TreeNode, TreeNodeType } from "./tree";
 import { joinPath } from "./path";
 
 export const parseTree = (data: string): Tree => {
-  return parseTreeJson(data) ?? new Tree("empty root", []);
+  return parseTreeJson(data) as Tree;
+};
+
+export const dumpTree = (tree: Tree): string => {
+  let dirCount = 0;
+  let fileCount = 0;
+
+  const dumpBranch = (branch: TreeNode): TreeJson => {
+    const { name, type } = branch;
+
+    if (type === "directory") dirCount++;
+    if (type === "file") fileCount++;
+
+    let children = undefined;
+    if (branch instanceof TreeDirectory) {
+      children = branch.children.map(dumpBranch);
+    }
+
+    return {
+      name: name,
+      type: type,
+      contents: children,
+    };
+  };
+
+  const report = () => ({
+    type: "report",
+    directories: Math.max(dirCount - 1, 0),
+    files: fileCount,
+  });
+
+  return JSON.stringify([dumpBranch(tree), report()]);
 };
 
 interface TreeJson {

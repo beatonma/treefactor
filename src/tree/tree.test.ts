@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import { Tree, TreeDirectory, TreeFile } from "./tree";
-import { parseTree } from "./parse";
 
 const Data = `[
   {"type":"directory","name":"root","contents":[
@@ -28,13 +27,12 @@ const Data = `[
       {"type":"file","name":"file.md"}
   ]},
     {"type":"file","name":"file.dat"}
-  ]}
-,
+  ]},
   {"type":"report","directories":7,"files":11}
 ]`;
 const DataSize = 19;
 
-const testTree = () => parseTree(Data);
+const testTree = () => Tree.parse(Data);
 
 const testParsedTree = (tree: Tree) => {
   expect(tree.name).toBe("root");
@@ -51,6 +49,17 @@ const testParsedTree = (tree: Tree) => {
 };
 
 describe("Tree data", () => {
+  test("Tree parsing and serialization is lossless", () => {
+    const original = testTree();
+
+    const repr = testTree().stringify();
+    console.log(repr);
+    const serialized = Tree.parse(repr);
+
+    expect(serialized).not.toEqual(original);
+    expect(serialized.equivalentTo(original)).toBeTrue();
+  });
+
   test("parseTree", () => {
     const tree = testTree();
     testParsedTree(tree);

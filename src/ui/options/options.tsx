@@ -2,7 +2,7 @@ import React, { createContext } from "react";
 import { DefaultOptions, Options } from "src/tree";
 import { StateUpdate } from "src/ui/types";
 import { Checkbox, checkboxProps } from "./fields";
-import { PersistenceKey, usePersistent } from "src/persistence";
+import { PersistenceKey, usePersistentObject } from "src/persistence";
 
 export const OptionsUI = (props: {
   options: Options;
@@ -30,4 +30,4 @@ export const OptionsContext: React.Context<Options> =
 export const useOptions = (): [
   Options,
   (value: ((prevState: Options) => Options) | Options) => void,
-] => usePersistent<Options>(PersistenceKey.Options, DefaultOptions);
+] => usePersistentObject<Options>(PersistenceKey.Options, DefaultOptions);
