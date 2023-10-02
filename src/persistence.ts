@@ -44,31 +44,7 @@ export const usePersistentTree = (key: PersistenceKey, initialState: Tree) =>
     parse: Tree.parse,
   });
 
-const load = <T>(key: PersistenceKey, transform: Parser<T>): T | undefined => {
-  const result = window.localStorage.getItem(key);
-  if (result) {
-    return transform(result);
-  }
-};
-
-const save = (key: PersistenceKey, value: string | undefined) => {
-  if (value) {
-    window.localStorage.setItem(key, value);
-  } else {
-    window.localStorage.removeItem(key);
-  }
-};
-
-const saveInitial = <T>(
-  key: PersistenceKey,
-  value: T,
-  transform: Serializer<T>,
-): T => {
-  save(key, transform(value));
-  return value;
-};
-
-const usePersistent = <T>(
+export const usePersistent = <T>(
   key: PersistenceKey,
   initialState: T,
   transforms: PersistenceTransforms<T>,
@@ -95,4 +71,28 @@ const usePersistent = <T>(
       }
     },
   ];
+};
+
+const load = <T>(key: PersistenceKey, transform: Parser<T>): T | undefined => {
+  const result = window.localStorage.getItem(key);
+  if (result) {
+    return transform(result);
+  }
+};
+
+const save = (key: PersistenceKey, value: string | undefined) => {
+  if (value) {
+    window.localStorage.setItem(key, value);
+  } else {
+    window.localStorage.removeItem(key);
+  }
+};
+
+const saveInitial = <T>(
+  key: PersistenceKey,
+  value: T,
+  transform: Serializer<T>,
+): T => {
+  save(key, transform(value));
+  return value;
 };

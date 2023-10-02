@@ -40,7 +40,7 @@ const DirectoryUI = (props: DirectoryProps & NodeProps) => {
     <div
       className={directory.type}
       data-type={directory.type}
-      data-is-summary={!options.showFiles}
+      data-is-summary={!options.showFiles.value}
       title={directory.fullPath}
       {...draggableProps}
       {...droppableProps}
@@ -60,7 +60,9 @@ const DirectoryName = (props: DirectoryProps) => {
       <Name name={directory.name} />
       <Label
         contents={
-          options.showDirectorySummary ? [...directory.contentDescription] : []
+          options.showDirectorySummary.value
+            ? [...directory.contentDescription]
+            : []
         }
         title="Contained file types"
       />
@@ -103,7 +105,7 @@ const Contents = (props: { children: TreeNode[] } & NodeProps) => {
   const options = useContext(OptionsContext);
   const { children, isEditable } = props;
 
-  const renderableContents = options.showFiles
+  const renderableContents = options.showFiles.value
     ? children
     : children.filter(it => it.type === "directory");
 

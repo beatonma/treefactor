@@ -53,7 +53,6 @@ describe("Tree data", () => {
     const original = testTree();
 
     const repr = testTree().stringify();
-    console.log(repr);
     const serialized = Tree.parse(repr);
 
     expect(serialized).not.toEqual(original);
