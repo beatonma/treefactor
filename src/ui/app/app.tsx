@@ -170,6 +170,7 @@ const Editor = (props: { initialTree: Tree }) => {
   return (
     <OptionsContext.Provider value={options}>
       <OptionsUI options={options} setOptions={setOptions} />
+      <Report tree={initialTree} />
       <div className="editor">
         <div>
           <h2>Original structure</h2>
@@ -181,5 +182,22 @@ const Editor = (props: { initialTree: Tree }) => {
         </div>
       </div>
     </OptionsContext.Provider>
+  );
+};
+
+const Report = (props: { tree: Tree }) => {
+  const { tree } = props;
+
+  const report = tree.report();
+
+  return (
+    <div className="report">
+      <span>
+        <span className="report-count">{report.directories}</span> directories
+      </span>
+      <span>
+        <span className="report-count">{report.files}</span> files
+      </span>
+    </div>
   );
 };

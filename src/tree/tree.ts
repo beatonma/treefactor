@@ -253,4 +253,23 @@ export class Tree extends TreeDirectory {
   static parse = (repr: string): Tree => parseTree(repr);
 
   stringify = (): string => dumpTree(this);
+  report = () => {
+    let dirCount = 0;
+    let fileCount = 0;
+
+    const countBranch = (branch: TreeNode) => {
+      if (branch instanceof TreeDirectory) {
+        dirCount++;
+        branch.children.forEach(countBranch);
+      } else {
+        fileCount++;
+      }
+    };
+    countBranch(this);
+
+    return {
+      directories: Math.max(dirCount - 1, 0), // Remove tree root from count.
+      files: fileCount,
+    };
+  };
 }

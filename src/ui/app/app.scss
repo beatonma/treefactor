@@ -1,3 +1,9 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 [data-drag-drop-preview] {
   position: absolute;
   left: -100lvw;
@@ -183,6 +189,13 @@
     text-overflow: ellipsis;
     overflow-x: hidden;
     max-width: 32ch;
+  }
+
+  .report {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 1ch;
+    justify-content: center;
   }
 
   [draggable="true"] {
